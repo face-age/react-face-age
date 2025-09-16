@@ -1,0 +1,13 @@
+.idea
+issues/
+example/node_modules/
+example/package-lock.json
+example/yarn.lock
+node_modules/
+dist/
+.DS_Store
+.nyc_output
+.vscode
+package-lock.json
+yarn-error.log
+yarn.lock

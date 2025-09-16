@@ -1,0 +1,12 @@
+.idea
+.DS_Store
+examples/
+node_modules/
+src/
+types/
+.gitignore
+gulpfile.js
+jest.config.js
+rollup.config.js
+tsconfig.json
+yarn.lock
