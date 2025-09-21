@@ -1,29 +1,26 @@
-import babel from 'rollup-plugin-babel';
 import resolve from 'rollup-plugin-node-resolve';
-import uglify from 'rollup-plugin-uglify'
+import typescript from 'rollup-plugin-typescript2';
 
-let pluginOptions = [
-  resolve({
-    browser: true
-  }),
-  babel({
-    exclude: 'node_modules/**'
-  }),
-  uglify()
+const plugins = [
+  resolve({ browser: true }),
+  typescript({ useTsconfigDeclarationDir: true })
 ];
 
 module.exports = {
-  input: './src/react-faceage.jsx',
-  output: [{
-    name: 'ReactFaceAge',
-    file: 'dist/react-faceage.iife.min.js',
-    format: 'iife',
-    globals: {
-      react: "React",
-      faceage: "FaceAge",
-      'prop-types': "PropTypes"
+  input: './src/react-faceage.tsx',
+  output: [
+    {
+      file: 'dist/index.esm.js',
+      format: 'esm',
+      sourcemap: true
+    },
+    {
+      file: 'dist/index.cjs.js',
+      format: 'cjs',
+      exports: 'named',
+      sourcemap: true
     }
-  }],
-  external: ['react', 'face-age', 'prop-types'],
-  plugins: pluginOptions
+  ],
+  external: ['react', 'face-age'],
+  plugins
 }
