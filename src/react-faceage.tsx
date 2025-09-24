@@ -8,6 +8,8 @@ export type DisplayModel = 'section' | 'modal' | (string & {});
 export interface FaceAgeOptions {
   elementId?: string;
   faceageId: string;
+  type?: string;
+  analyzerType?: string;
   displayModel?: DisplayModel;
   language?: string;
   height?: string;
@@ -64,10 +66,20 @@ export default class ReactFaceAge extends React.Component<ReactFaceAgeProps, Rea
 
     const options = this.getConfig();
     if (options && options.displayModel !== 'modal') {
-      options.elementId = 'FaceAge-module';
+      (options as any).elementId = 'FaceAge-module';
     }
 
     this.face = new (FaceAge as any)(options);
+    // Apply custom products before render if provided
+    if (this.props.setCustomProducts !== undefined) {
+      try {
+        this.face.API.setCustomProducts(this.props.setCustomProducts);
+      } catch (_) {
+        // ignore
+      }
+    }
+    // Register handlers as early as possible
+    this.registerEventHandlers(this.props);
     this.face.render();
   }
 
@@ -134,65 +146,31 @@ export default class ReactFaceAge extends React.Component<ReactFaceAgeProps, Rea
       });
     }
 
-    if (prevProps.getActiveSelections !== getAdvisorData && getRoutineGroup) {
+    if (prevProps.getRoutineGroup !== getRoutineGroup && getRoutineGroup) {
       getRoutineGroup(this.face.API.getRoutineGroup());
     }
 
-    if (
-      prevProps.getActiveSelections !== onClickProblem &&
-      onClickProblem &&
-      typeof onClickProblem === 'function'
-    ) {
-      this.face.onClickProblem(onClickProblem);
+    // Re-register event handlers when their references change
+    if (prevProps.onClickProblem !== onClickProblem) {
+      if (typeof onClickProblem === 'function') this.face.onClickProblem(onClickProblem);
     }
-
-    if (
-      prevProps.getActiveSelections !== onDisplayProducts &&
-      onDisplayProducts &&
-      typeof onDisplayProducts === 'function'
-    ) {
-      this.face.onDisplayProducts(onDisplayProducts);
+    if (prevProps.onDisplayProducts !== onDisplayProducts) {
+      if (typeof onDisplayProducts === 'function') this.face.onDisplayProducts(onDisplayProducts);
     }
-
-    if (
-      prevProps.getActiveSelections !== onDisplayRoutines &&
-      onDisplayRoutines &&
-      typeof onDisplayRoutines === 'function'
-    ) {
-      // Keeping original API usage as-is
-      this.face.onDisplayProducts(onDisplayRoutines);
+    if (prevProps.onDisplayRoutines !== onDisplayRoutines) {
+      if (typeof onDisplayRoutines === 'function') this.face.onDisplayProducts(onDisplayRoutines);
     }
-
-    if (
-      prevProps.getActiveSelections !== onAddToCart &&
-      onAddToCart &&
-      typeof onAddToCart === 'function'
-    ) {
-      this.face.onAddToCart(onAddToCart);
+    if (prevProps.onAddToCart !== onAddToCart) {
+      if (typeof onAddToCart === 'function') this.face.onAddToCart(onAddToCart);
     }
-
-    if (
-      prevProps.getActiveSelections !== onClickProduct &&
-      onClickProduct &&
-      typeof onClickProduct === 'function'
-    ) {
-      this.face.onClickProduct(onClickProduct);
+    if (prevProps.onClickProduct !== onClickProduct) {
+      if (typeof onClickProduct === 'function') this.face.onClickProduct(onClickProduct);
     }
-
-    if (
-      prevProps.getActiveSelections !== onCloseModal &&
-      onCloseModal &&
-      typeof onCloseModal === 'function'
-    ) {
-      this.face.onCloseModal(onCloseModal);
+    if (prevProps.onCloseModal !== onCloseModal) {
+      if (typeof onCloseModal === 'function') this.face.onCloseModal(onCloseModal);
     }
-
-    if (
-      prevProps.getActiveSelections !== onCheckout &&
-      onCheckout &&
-      typeof onCheckout === 'function'
-    ) {
-      this.face.onCheckout(onCheckout);
+    if (prevProps.onCheckout !== onCheckout) {
+      if (typeof onCheckout === 'function') this.face.onCheckout(onCheckout);
     }
 
     if (prevProps.onResetData !== onResetData) {
@@ -224,6 +202,8 @@ export default class ReactFaceAge extends React.Component<ReactFaceAgeProps, Rea
 
     const {
       faceageId,
+      type,
+      analyzerType,
       displayModel,
       language,
       height,
@@ -238,8 +218,12 @@ export default class ReactFaceAge extends React.Component<ReactFaceAgeProps, Rea
       showUpload,
     } = this.props;
 
+    const effectiveType = analyzerType ?? type;
+
     const provided: Partial<FaceAgeOptions> = {
       faceageId,
+      type: effectiveType,
+      analyzerType,
       displayModel,
       language,
       height,
@@ -260,14 +244,32 @@ export default class ReactFaceAge extends React.Component<ReactFaceAgeProps, Rea
 
     const merged = { ...defaults, ...cleaned } as FaceAgeOptions;
 
-    // Always enforce the mount element id expected by the wrapper
-    merged.elementId = 'FaceAge-module';
-
     if (!merged.faceageId || typeof merged.faceageId !== 'string') {
-      throw new Error('ReactFaceAge: options.faceageId (Face Age Client ID) is required');
+      throw new Error('ReactFaceAge: faceageId (Face Age Client ID) is required');
     }
 
     return merged;
+  }
+
+  private registerEventHandlers(props: ReactFaceAgeProps): void {
+    if (!this.face) return;
+    const {
+      onClickProblem,
+      onDisplayProducts,
+      onDisplayRoutines,
+      onAddToCart,
+      onClickProduct,
+      onCloseModal,
+      onCheckout,
+    } = props;
+
+    if (typeof onClickProblem === 'function') this.face.onClickProblem(onClickProblem);
+    if (typeof onDisplayProducts === 'function') this.face.onDisplayProducts(onDisplayProducts);
+    if (typeof onDisplayRoutines === 'function') this.face.onDisplayProducts(onDisplayRoutines);
+    if (typeof onAddToCart === 'function') this.face.onAddToCart(onAddToCart);
+    if (typeof onClickProduct === 'function') this.face.onClickProduct(onClickProduct);
+    if (typeof onCloseModal === 'function') this.face.onCloseModal(onCloseModal);
+    if (typeof onCheckout === 'function') this.face.onCheckout(onCheckout);
   }
 
   render(): React.ReactNode {
